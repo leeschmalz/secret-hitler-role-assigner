@@ -187,10 +187,6 @@ const Home = ({ navigate }) => {
       <header className="hero">
         <p className="eyebrow">Secret Hitler</p>
         <h1>Role Assigner</h1>
-        <p className="lead">
-          Spin up a shared game, pass the id around, and handle roles without
-          cards.
-        </p>
       </header>
 
       <section className="grid">
