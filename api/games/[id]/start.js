@@ -1,6 +1,6 @@
 import { sql } from '../../_db.js'
 import { json, methodNotAllowed } from '../../_http.js'
-import { GAME_ID_RE, MAX_PLAYERS, MIN_PLAYERS } from '../../_game.js'
+import { GAME_ID_RE, MAX_PLAYERS, MIN_PLAYERS, canAddPlayers } from '../../_game.js'
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
@@ -18,7 +18,7 @@ export default async function handler(req, res) {
       return json(res, 404, { error: 'Game not found.' })
     }
 
-    if (games[0].state !== 'add_players') {
+    if (!canAddPlayers(games[0].state)) {
       return json(res, 400, { error: 'Game already started.' })
     }
 

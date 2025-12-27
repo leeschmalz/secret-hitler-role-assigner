@@ -16,3 +16,20 @@ npm run dev
 ```
 
 The frontend uses `/api` for game actions. For local API testing, use `vercel dev`.
+
+• Got it. If you already have psql, you just need a running Postgres server, a DB, and DATABASE_URL.
+
+  Commands (use your existing Postgres)
+
+  createdb secret_hitler
+  psql secret_hitler -f db/schema.sql
+
+  .env.local
+
+  cat > .env.local <<'EOF'
+  DATABASE_URL=postgres://localhost:5432/secret_hitler
+  EOF
+
+  Run local app + API
+
+  npx vercel dev

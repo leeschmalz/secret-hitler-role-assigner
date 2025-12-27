@@ -1,6 +1,6 @@
 import { sql } from '../_db.js'
 import { json, methodNotAllowed } from '../_http.js'
-import { GAME_ID_RE } from '../_game.js'
+import { GAME_ID_RE, normalizeState } from '../_game.js'
 
 export default async function handler(req, res) {
   if (req.method !== 'GET') {
@@ -44,7 +44,7 @@ export default async function handler(req, res) {
     const game = games[0]
     return json(res, 200, {
       id: game.id,
-      state: game.state,
+      state: normalizeState(game.state),
       round: game.round,
       players: players.map((player) => player.name),
       playerCount: players.length,

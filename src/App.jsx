@@ -6,6 +6,14 @@ const GAME_ID_RE = /^[a-z]{5}$/
 const POLL_INTERVAL = 4000
 
 const request = async (path, options = {}) => {
+  const shouldLog = typeof window !== 'undefined' && import.meta?.env?.DEV
+  if (shouldLog) {
+    console.info('[api] request', {
+      path,
+      method: options.method || 'GET',
+    })
+  }
+
   const response = await fetch(path, {
     headers: {
       'Content-Type': 'application/json',
@@ -21,7 +29,14 @@ const request = async (path, options = {}) => {
     payload = {}
   }
 
+  if (shouldLog) {
+    console.info('[api] response', { path, status: response.status, ok: response.ok })
+  }
+
   if (!response.ok) {
+    if (shouldLog) {
+      console.error('[api] error', { path, status: response.status, payload })
+    }
     throw new Error(payload.error || 'Request failed.')
   }
 
@@ -261,16 +276,23 @@ const Game = ({ gameId, navigate }) => {
   }, [game, player, gameId])
 
   const rolesReady = useMemo(() => (game?.round ?? 0) > 0, [game])
+  const canAddPlayers = useMemo(() => {
+    if (!game) {
+      return false
+    }
+    return game.state === 'add_players' || game.state === 'inactive'
+  }, [game])
+
   const canStart = useMemo(() => {
     if (!game) {
       return false
     }
     return (
-      game.state === 'add_players' &&
+      canAddPlayers &&
       game.playerCount >= MIN_PLAYERS &&
       game.playerCount <= MAX_PLAYERS
     )
-  }, [game])
+  }, [game, canAddPlayers])
 
   const handleJoin = async (event) => {
     event.preventDefault()
@@ -278,7 +300,7 @@ const Game = ({ gameId, navigate }) => {
       return
     }
 
-    if (game.state !== 'add_players') {
+    if (!canAddPlayers) {
       setNotice('Game already started. Ask to restart to join.')
       return
     }
@@ -429,14 +451,14 @@ const Game = ({ gameId, navigate }) => {
               onChange={(event) => setNameInput(event.target.value)}
               placeholder="Your name"
               aria-label="Your name"
-              disabled={game.state !== 'add_players' || game.playerCount >= MAX_PLAYERS}
+              disabled={!canAddPlayers || game.playerCount >= MAX_PLAYERS}
             />
             <button
               className="btn large"
               type="submit"
               disabled={
                 busyAction === 'join' ||
-                game.state !== 'add_players' ||
+                !canAddPlayers ||
                 game.playerCount >= MAX_PLAYERS
               }
             >

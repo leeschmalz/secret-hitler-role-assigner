@@ -3,6 +3,7 @@ import { json, methodNotAllowed, readJson } from '../../_http.js'
 import {
   GAME_ID_RE,
   MAX_PLAYERS,
+  canAddPlayers,
   nameKey,
   normalizeName,
   randomId,
@@ -37,7 +38,7 @@ export default async function handler(req, res) {
       return json(res, 404, { error: 'Game not found.' })
     }
 
-    if (games[0].state !== 'add_players') {
+    if (!canAddPlayers(games[0].state)) {
       return json(res, 400, { error: 'Game already started.' })
     }
 

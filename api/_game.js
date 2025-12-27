@@ -37,6 +37,29 @@ export const normalizeName = (name) => name.trim().replace(/\s+/g, ' ')
 
 export const nameKey = (name) => normalizeName(name).toLowerCase()
 
+export const normalizeState = (state) => {
+  const value = String(state || '').toLowerCase().trim()
+  if (!value) {
+    return ''
+  }
+  const underscored = value.replace(/[\s-]+/g, '_')
+  if (underscored === 'adding_players' || underscored === 'add_players') {
+    return 'add_players'
+  }
+  if (underscored === 'inactive') {
+    return 'inactive'
+  }
+  if (underscored === 'active') {
+    return 'active'
+  }
+  return underscored
+}
+
+export const canAddPlayers = (state) => {
+  const normalized = normalizeState(state)
+  return normalized === 'add_players' || normalized === 'inactive'
+}
+
 export const randomGameId = () => {
   const bytes = randomBytes(5)
   let value = ''
