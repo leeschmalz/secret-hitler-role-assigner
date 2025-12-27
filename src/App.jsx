@@ -206,6 +206,7 @@ const Game = ({ gameId, navigate }) => {
   const [lastRevealRound, setLastRevealRound] = useState(0)
   const [viewTarget, setViewTarget] = useState('')
   const [viewResult, setViewResult] = useState(null)
+  const [justJoined, setJustJoined] = useState(false)
 
   useEffect(() => {
     setPlayer(getStoredPlayer(gameId))
@@ -216,6 +217,7 @@ const Game = ({ gameId, navigate }) => {
     setNotice('')
     setError('')
     setLoading(true)
+    setJustJoined(false)
   }, [gameId])
 
   useEffect(() => {
@@ -276,7 +278,18 @@ const Game = ({ gameId, navigate }) => {
   }, [game, viewTarget])
 
   useEffect(() => {
-    if (!player || !game?.players) {
+    // Don't check immediately after joining (race condition with game refresh)
+    if (justJoined) {
+      return
+    }
+
+    // Don't check if we don't have valid data
+    if (!player || !game?.players || loading) {
+      return
+    }
+
+    // Don't clear player if game has no players yet (could be stale data)
+    if (game.players.length === 0) {
       return
     }
 
@@ -286,12 +299,12 @@ const Game = ({ gameId, navigate }) => {
     if (!stillInGame) {
       clearStoredPlayer(gameId)
       setPlayer(null)
-      setNotice('Join again to participate in this game.')
+      setNotice('You were removed from the game. Join again to participate.')
       setRevealMessage('')
       setViewResult(null)
       setLastRevealRound(0)
     }
-  }, [game, player, gameId])
+  }, [game, player, gameId, justJoined, loading])
 
   const rolesReady = useMemo(() => (game?.round ?? 0) > 0, [game])
   const canAddPlayers = useMemo(() => {
@@ -387,12 +400,16 @@ const Game = ({ gameId, navigate }) => {
         body: JSON.stringify({ name }),
       })
       const nextPlayer = { name: data.name, token: data.token }
+      setJustJoined(true)
       setPlayer(nextPlayer)
       setStoredPlayer(gameId, nextPlayer)
       setNameInput('')
       await refreshGame()
+      // Clear the justJoined flag after game data is refreshed
+      setJustJoined(false)
     } catch (err) {
       setNotice(err.message)
+      setJustJoined(false)
     } finally {
       setBusyAction('')
     }
