@@ -3,7 +3,7 @@ import { useEffect, useMemo, useState } from 'react'
 const MIN_PLAYERS = 5
 const MAX_PLAYERS = 10
 const GAME_ID_RE = /^[a-z]{5}$/
-const POLL_INTERVAL = 4000
+const POLL_INTERVAL = 2500
 
 const request = async (path, options = {}) => {
   const shouldLog = (() => {
@@ -77,12 +77,6 @@ const useRoute = () => {
   }
 
   return { path, navigate }
-}
-
-const stateLabels = {
-  inactive: 'Inactive',
-  add_players: 'Adding players',
-  active: 'Active',
 }
 
 const normalizeGame = (data) => {
@@ -231,20 +225,20 @@ const Game = ({ gameId, navigate }) => {
       if (initial) {
         setLoading(true)
       }
-    try {
-      const data = await request(`/api/games/${gameId}`)
-      if (active) {
-        const nextGame = normalizeGame(data)
-        if (!nextGame) {
-          setError('Invalid game data.')
-          return
+      try {
+        const data = await request(`/api/games/${gameId}`)
+        if (active) {
+          const nextGame = normalizeGame(data)
+          if (!nextGame) {
+            setError('Invalid game data.')
+            return
+          }
+          setGame(nextGame)
+          setError('')
         }
-        setGame(nextGame)
-        setError('')
-      }
-    } catch (err) {
-      if (active) {
-        setError(err.message)
+      } catch (err) {
+        if (active) {
+          setError(err.message)
         }
       } finally {
         if (active && initial) {
@@ -318,25 +312,10 @@ const Game = ({ gameId, navigate }) => {
     )
   }, [game, canAddPlayers])
 
-  const playerStatus = useMemo(() => {
-    if (!game || !player) {
-      return ''
-    }
-    if (canAddPlayers) {
-      if (canStart) {
-        return 'Everyone is in. Start the game when ready.'
-      }
-      const needed = Math.max(MIN_PLAYERS - game.playerCount, 0)
-      return `Waiting for other players. Need ${needed} more to start.`
-    }
-    if (game.state === 'active') {
-      if (rolesReady) {
-        return `Roles assigned for round ${game.round}.`
-      }
-      return 'Game started. Waiting to assign roles.'
-    }
-    return ''
-  }, [game, player, canAddPlayers, canStart, rolesReady])
+  const playersNeeded = useMemo(() => {
+    if (!game) return MIN_PLAYERS
+    return Math.max(MIN_PLAYERS - game.playerCount, 0)
+  }, [game])
 
   useEffect(() => {
     if (!player?.token) {
@@ -411,7 +390,6 @@ const Game = ({ gameId, navigate }) => {
       setPlayer(nextPlayer)
       setStoredPlayer(gameId, nextPlayer)
       setNameInput('')
-      setNotice(`Joined as ${data.name}. Waiting for other players.`)
       await refreshGame()
     } catch (err) {
       setNotice(err.message)
@@ -498,33 +476,19 @@ const Game = ({ gameId, navigate }) => {
     return null
   }
 
-  return (
-    <div className="app">
-      <header className="game-header">
-        <div>
+  // Not joined yet - show join screen
+  if (!player) {
+    return (
+      <div className="app">
+        <header className="hero centered">
           <p className="eyebrow">Game id</p>
-          <h1>{gameId}</h1>
-          <p className="lead">Share this id so everyone can join.</p>
-        </div>
-        <button className="btn ghost" type="button" onClick={() => navigate('/')}>
-          Exit
-        </button>
-      </header>
+          <h1 className="game-code">{gameId}</h1>
+          <p className="lead">Enter your name to join this game.</p>
+        </header>
 
-      <section className="card status">
-        <div className="meta-row">
-          <span className={`pill ${game.state}`}>{stateLabels[game.state] || 'Unknown'}</span>
-          <span className="meta">Players: {game.playerCount}</span>
-          <span className="meta">Round: {game.round || '-'}</span>
-        </div>
-        <p className="muted">Need {MIN_PLAYERS}-{MAX_PLAYERS} players to start.</p>
-        {notice ? <p className="notice">{notice}</p> : null}
-      </section>
-
-      {!player ? (
-        <section className="card">
-          <h2>Join this game</h2>
-          <form className="row" onSubmit={handleJoin}>
+        <section className="card join-card">
+          <h2>Join game</h2>
+          <form className="join-form" onSubmit={handleJoin}>
             <input
               type="text"
               value={nameInput}
@@ -532,6 +496,7 @@ const Game = ({ gameId, navigate }) => {
               placeholder="Your name"
               aria-label="Your name"
               disabled={!canAddPlayers || game.playerCount >= MAX_PLAYERS}
+              autoFocus
             />
             <button
               className="btn large"
@@ -545,118 +510,275 @@ const Game = ({ gameId, navigate }) => {
               {busyAction === 'join' ? 'Joining…' : 'Join'}
             </button>
           </form>
-          <p className="muted">You can only join before the game starts.</p>
+          {notice ? <p className="notice">{notice}</p> : null}
+          {!canAddPlayers ? (
+            <p className="notice">Game already started. Ask to restart to join.</p>
+          ) : game.playerCount >= MAX_PLAYERS ? (
+            <p className="notice">Game is full (10 players).</p>
+          ) : null}
         </section>
-      ) : (
+
         <section className="card">
-          <h2>You're in</h2>
-          <p className="lead">{player.name}</p>
-          {playerStatus ? <p className="muted">{playerStatus}</p> : null}
+          <h2>Players ({game.playerCount})</h2>
+          {game.players.length ? (
+            <ul className="player-list">
+              {game.players.map((playerName) => (
+                <li key={playerName}>{playerName}</li>
+              ))}
+            </ul>
+          ) : (
+            <p className="muted">No players have joined yet.</p>
+          )}
         </section>
-      )}
 
-      {player ? (
+        <footer className="footer-nav">
+          <button className="btn ghost" type="button" onClick={() => navigate('/')}>
+            ← Back
+          </button>
+        </footer>
+      </div>
+    )
+  }
+
+  // Joined - Waiting for players
+  if (canAddPlayers && !canStart) {
+    return (
+      <div className="app">
+        <header className="hero centered">
+          <p className="eyebrow">Game id</p>
+          <h1 className="game-code">{gameId}</h1>
+        </header>
+
+        <section className="card waiting-card">
+          <div className="waiting-indicator">
+            <div className="spinner" />
+          </div>
+          <h2>Waiting for players</h2>
+          <p className="player-name-display">{player.name}</p>
+          <p className="muted">
+            {playersNeeded > 0
+              ? `Need ${playersNeeded} more player${playersNeeded > 1 ? 's' : ''} to start`
+              : 'Waiting for others to join…'}
+          </p>
+          <div className="player-count-display">
+            <span className="count">{game.playerCount}</span>
+            <span className="label">/ {MIN_PLAYERS}-{MAX_PLAYERS} players</span>
+          </div>
+        </section>
+
         <section className="card">
-          <h2>Actions</h2>
-          <div className="action-grid">
-            <button
-              className="btn large"
-              type="button"
-              onClick={startGame}
-              disabled={!canStart || busyAction === 'start'}
-            >
-              {busyAction === 'start' ? 'Starting…' : 'Start game'}
-            </button>
-            <button
-              className="btn large"
-              type="button"
-              onClick={assignRoles}
-              disabled={game.state !== 'active' || busyAction === 'assign'}
-            >
-              {busyAction === 'assign' ? 'Assigning…' : 'Assign roles'}
-            </button>
-            <div className="action-stack">
-              <button
-                className="btn large secondary"
-                type="button"
-                onClick={viewParty}
-                disabled={!rolesReady || !player?.token || busyAction === 'view'}
-              >
-                {busyAction === 'view' ? 'Viewing…' : 'View party'}
-              </button>
-              <select
-                value={viewTarget}
-                onChange={(event) => setViewTarget(event.target.value)}
-                disabled={!rolesReady || !game.players.length}
-                aria-label="Select player to view"
-              >
-                {game.players.length ? (
-                  game.players.map((playerName) => (
-                    <option key={playerName} value={playerName}>
-                      {playerName}
-                    </option>
-                  ))
-                ) : (
-                  <option value="">No players</option>
-                )}
-              </select>
-            </div>
-            <button
-              className="btn large danger"
-              type="button"
-              onClick={endGame}
-              disabled={busyAction === 'end'}
-            >
-              {busyAction === 'end' ? 'Ending…' : 'End game'}
-            </button>
-          </div>
-        </section>
-      ) : null}
-
-      {player ? (
-        <section className="grid">
-          <div className="card">
-            <h2>Your role</h2>
-            <p className="muted">Shown only on your device after roles are assigned.</p>
-            <div className="result">
-              <p>
-                {rolesReady
-                  ? revealMessage || 'Fetching your role...'
-                  : 'Waiting for roles to be assigned.'}
-              </p>
-            </div>
-          </div>
-          <div className="card">
-            <h2>Party membership</h2>
-            <p className="muted">Only the viewer sees the party card.</p>
-            <div className="result">
-              <p>
-                {viewResult
-                  ? `${viewResult.name}'s party is ${viewResult.party}.`
-                  : 'No membership viewed yet.'}
-              </p>
-            </div>
-          </div>
-        </section>
-      ) : null}
-
-      <section className="card">
-        <h2>Players</h2>
-        {game.players.length ? (
-          <ul className="list">
+          <h2>Players</h2>
+          <ul className="player-list">
             {game.players.map((playerName) => (
-              <li key={playerName}>{playerName}</li>
+              <li key={playerName} className={playerName === player.name ? 'you' : ''}>
+                {playerName}
+                {playerName === player.name ? <span className="you-badge">you</span> : null}
+              </li>
             ))}
           </ul>
-        ) : (
-          <p className="muted">No players have joined yet.</p>
-        )}
+        </section>
+
+        {notice ? <p className="notice">{notice}</p> : null}
+
+        <footer className="footer-nav">
+          <button className="btn ghost" type="button" onClick={() => navigate('/')}>
+            ← Back
+          </button>
+        </footer>
+      </div>
+    )
+  }
+
+  // Joined - Ready to start
+  if (canAddPlayers && canStart) {
+    return (
+      <div className="app">
+        <header className="hero centered">
+          <p className="eyebrow">Game id</p>
+          <h1 className="game-code">{gameId}</h1>
+        </header>
+
+        <section className="card ready-card">
+          <div className="ready-indicator">✓</div>
+          <h2>Ready to start!</h2>
+          <p className="player-name-display">{player.name}</p>
+          <p className="muted">All players are in. Anyone can start the game.</p>
+          <div className="player-count-display">
+            <span className="count">{game.playerCount}</span>
+            <span className="label">players</span>
+          </div>
+          <button
+            className="btn large start-btn"
+            type="button"
+            onClick={startGame}
+            disabled={busyAction === 'start'}
+          >
+            {busyAction === 'start' ? 'Starting…' : 'Start Game'}
+          </button>
+        </section>
+
+        <section className="card">
+          <h2>Players</h2>
+          <ul className="player-list">
+            {game.players.map((playerName) => (
+              <li key={playerName} className={playerName === player.name ? 'you' : ''}>
+                {playerName}
+                {playerName === player.name ? <span className="you-badge">you</span> : null}
+              </li>
+            ))}
+          </ul>
+        </section>
+
+        {notice ? <p className="notice">{notice}</p> : null}
+
+        <footer className="footer-nav">
+          <button className="btn ghost" type="button" onClick={() => navigate('/')}>
+            ← Back
+          </button>
+        </footer>
+      </div>
+    )
+  }
+
+  // Game active - waiting for role assignment
+  if (game.state === 'active' && !rolesReady) {
+    return (
+      <div className="app">
+        <header className="hero centered">
+          <p className="eyebrow">Game id</p>
+          <h1 className="game-code">{gameId}</h1>
+        </header>
+
+        <section className="card assign-card">
+          <h2>Game Started</h2>
+          <p className="player-name-display">{player.name}</p>
+          <p className="muted">Assign roles to begin playing.</p>
+          <button
+            className="btn large assign-btn"
+            type="button"
+            onClick={assignRoles}
+            disabled={busyAction === 'assign'}
+          >
+            {busyAction === 'assign' ? 'Assigning…' : 'Assign Roles'}
+          </button>
+        </section>
+
+        <section className="card">
+          <h2>Players ({game.playerCount})</h2>
+          <ul className="player-list">
+            {game.players.map((playerName) => (
+              <li key={playerName} className={playerName === player.name ? 'you' : ''}>
+                {playerName}
+                {playerName === player.name ? <span className="you-badge">you</span> : null}
+              </li>
+            ))}
+          </ul>
+        </section>
+
+        {notice ? <p className="notice">{notice}</p> : null}
+
+        <section className="card danger-zone">
+          <button
+            className="btn danger"
+            type="button"
+            onClick={endGame}
+            disabled={busyAction === 'end'}
+          >
+            {busyAction === 'end' ? 'Ending…' : 'End Game'}
+          </button>
+        </section>
+
+        <footer className="footer-nav">
+          <button className="btn ghost" type="button" onClick={() => navigate('/')}>
+            ← Back
+          </button>
+        </footer>
+      </div>
+    )
+  }
+
+  // Game active - roles assigned, show your role
+  return (
+    <div className="app">
+      <header className="hero centered">
+        <p className="eyebrow">Round {game.round}</p>
+        <h1 className="game-code">{gameId}</h1>
+      </header>
+
+      <section className="card role-card">
+        <h2>Your Role</h2>
+        <p className="player-name-display">{player.name}</p>
+        <div className={`role-reveal ${getRoleClass(revealMessage)}`}>
+          {revealMessage || 'Fetching your role...'}
+        </div>
+      </section>
+
+      <section className="card actions-card">
+        <h2>Actions</h2>
+        <div className="action-buttons">
+          <button
+            className="btn large"
+            type="button"
+            onClick={assignRoles}
+            disabled={busyAction === 'assign'}
+          >
+            {busyAction === 'assign' ? 'Assigning…' : 'New Round'}
+          </button>
+        </div>
+
+        <div className="view-party-section">
+          <h3>Investigate Party Membership</h3>
+          <p className="muted">Presidential power: view a player's party card.</p>
+          <div className="view-party-row">
+            <select
+              value={viewTarget}
+              onChange={(event) => setViewTarget(event.target.value)}
+              disabled={!game.players.length}
+              aria-label="Select player to view"
+            >
+              {game.players.length ? (
+                game.players.map((playerName) => (
+                  <option key={playerName} value={playerName}>
+                    {playerName}
+                  </option>
+                ))
+              ) : (
+                <option value="">No players</option>
+              )}
+            </select>
+            <button
+              className="btn secondary"
+              type="button"
+              onClick={viewParty}
+              disabled={!player?.token || busyAction === 'view'}
+            >
+              {busyAction === 'view' ? 'Viewing…' : 'View Party'}
+            </button>
+          </div>
+          {viewResult ? (
+            <div className="view-result">
+              <strong>{viewResult.name}'s</strong> party is <strong>{viewResult.party}</strong>
+            </div>
+          ) : null}
+        </div>
+      </section>
+
+      <section className="card">
+        <h2>Players ({game.playerCount})</h2>
+        <ul className="player-list">
+          {game.players.map((playerName) => (
+            <li key={playerName} className={playerName === player.name ? 'you' : ''}>
+              {playerName}
+              {playerName === player.name ? <span className="you-badge">you</span> : null}
+            </li>
+          ))}
+        </ul>
       </section>
 
       <section className="card">
         <h2>Activity</h2>
         {game.events?.length ? (
-          <ul className="list muted">
+          <ul className="activity-list">
             {game.events.map((event) => (
               <li key={event.id}>{event.message}</li>
             ))}
@@ -665,8 +787,36 @@ const Game = ({ gameId, navigate }) => {
           <p className="muted">No activity yet.</p>
         )}
       </section>
+
+      {notice ? <p className="notice">{notice}</p> : null}
+
+      <section className="card danger-zone">
+        <button
+          className="btn danger"
+          type="button"
+          onClick={endGame}
+          disabled={busyAction === 'end'}
+        >
+          {busyAction === 'end' ? 'Ending…' : 'End Game'}
+        </button>
+      </section>
+
+      <footer className="footer-nav">
+        <button className="btn ghost" type="button" onClick={() => navigate('/')}>
+          ← Back
+        </button>
+      </footer>
     </div>
   )
+}
+
+const getRoleClass = (message) => {
+  if (!message) return ''
+  const lower = message.toLowerCase()
+  if (lower.includes('liberal')) return 'liberal'
+  if (lower.includes('hitler')) return 'hitler'
+  if (lower.includes('fascist')) return 'fascist'
+  return ''
 }
 
 export default function App() {
