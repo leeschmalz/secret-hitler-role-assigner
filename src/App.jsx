@@ -238,6 +238,7 @@ const Game = ({ gameId, navigate }) => {
   const [viewTarget, setViewTarget] = useState('')
   const [viewResult, setViewResult] = useState(null)
   const [justJoined, setJustJoined] = useState(false)
+  const [showAssignConfirm, setShowAssignConfirm] = useState(false)
   const seenEventIds = useRef(new Set())
   const initialLoadDone = useRef(false)
 
@@ -251,6 +252,7 @@ const Game = ({ gameId, navigate }) => {
     setError('')
     setLoading(true)
     setJustJoined(false)
+    setShowAssignConfirm(false)
     seenEventIds.current = new Set()
     initialLoadDone.current = false
   }, [gameId])
@@ -796,14 +798,40 @@ const Game = ({ gameId, navigate }) => {
       <section className="card actions-card">
         <h2>Actions</h2>
         <div className="action-buttons">
-          <button
-            className="btn large"
-            type="button"
-            onClick={assignRoles}
-            disabled={busyAction === 'assign'}
-          >
-            {busyAction === 'assign' ? 'Assigning…' : 'New Round'}
-          </button>
+          {!showAssignConfirm ? (
+            <button
+              className="btn large"
+              type="button"
+              onClick={() => setShowAssignConfirm(true)}
+            >
+              New Round
+            </button>
+          ) : (
+            <div className="assign-confirm">
+              <p className="confirm-text">Ready to assign new roles?</p>
+              <div className="confirm-buttons">
+                <button
+                  className="btn large"
+                  type="button"
+                  onClick={() => {
+                    assignRoles()
+                    setShowAssignConfirm(false)
+                  }}
+                  disabled={busyAction === 'assign'}
+                >
+                  {busyAction === 'assign' ? 'Assigning…' : 'Assign Roles'}
+                </button>
+                <button
+                  className="btn ghost"
+                  type="button"
+                  onClick={() => setShowAssignConfirm(false)}
+                  disabled={busyAction === 'assign'}
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          )}
         </div>
 
         <div className="view-party-section">
