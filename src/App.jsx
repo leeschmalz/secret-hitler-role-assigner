@@ -781,7 +781,6 @@ const Game = ({ gameId, navigate }) => {
       </header>
 
       <section className="card role-card">
-        <h2>Your Role</h2>
         <p className="player-name-display">{player.name}</p>
         <div className={`role-reveal ${getRoleClass(revealMessage)}`}>
           {revealMessage || 'Fetching your role...'}
