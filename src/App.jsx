@@ -209,6 +209,7 @@ const Game = ({ gameId, navigate }) => {
   const [loading, setLoading] = useState(true)
   const [busyAction, setBusyAction] = useState('')
   const [revealMessage, setRevealMessage] = useState('')
+  const [lastRevealRound, setLastRevealRound] = useState(0)
   const [viewTarget, setViewTarget] = useState('')
   const [viewResult, setViewResult] = useState(null)
 
@@ -216,6 +217,7 @@ const Game = ({ gameId, navigate }) => {
     setPlayer(getStoredPlayer(gameId))
     setNameInput('')
     setRevealMessage('')
+    setLastRevealRound(0)
     setViewResult(null)
     setNotice('')
     setError('')
@@ -291,6 +293,9 @@ const Game = ({ gameId, navigate }) => {
       clearStoredPlayer(gameId)
       setPlayer(null)
       setNotice('Join again to participate in this game.')
+      setRevealMessage('')
+      setViewResult(null)
+      setLastRevealRound(0)
     }
   }, [game, player, gameId])
 
@@ -312,6 +317,71 @@ const Game = ({ gameId, navigate }) => {
       game.playerCount <= MAX_PLAYERS
     )
   }, [game, canAddPlayers])
+
+  const playerStatus = useMemo(() => {
+    if (!game || !player) {
+      return ''
+    }
+    if (canAddPlayers) {
+      if (canStart) {
+        return 'Everyone is in. Start the game when ready.'
+      }
+      const needed = Math.max(MIN_PLAYERS - game.playerCount, 0)
+      return `Waiting for other players. Need ${needed} more to start.`
+    }
+    if (game.state === 'active') {
+      if (rolesReady) {
+        return `Roles assigned for round ${game.round}.`
+      }
+      return 'Game started. Waiting to assign roles.'
+    }
+    return ''
+  }, [game, player, canAddPlayers, canStart, rolesReady])
+
+  useEffect(() => {
+    if (!player?.token) {
+      return
+    }
+
+    const round = game?.round ?? 0
+
+    if (round === 0) {
+      setRevealMessage('')
+      setViewResult(null)
+      setLastRevealRound(0)
+      return
+    }
+
+    if (round === lastRevealRound) {
+      return
+    }
+
+    let active = true
+    setRevealMessage('')
+    setViewResult(null)
+
+    const reveal = async () => {
+      try {
+        const data = await request(`/api/games/${gameId}/reveal`, {
+          method: 'POST',
+          body: JSON.stringify({ token: player.token }),
+        })
+        if (active) {
+          setRevealMessage(data.message)
+          setLastRevealRound(round)
+        }
+      } catch (err) {
+        if (active) {
+          setNotice(err.message)
+        }
+      }
+    }
+
+    reveal()
+    return () => {
+      active = false
+    }
+  }, [gameId, game?.round, lastRevealRound, player?.token])
 
   const handleJoin = async (event) => {
     event.preventDefault()
@@ -341,20 +411,13 @@ const Game = ({ gameId, navigate }) => {
       setPlayer(nextPlayer)
       setStoredPlayer(gameId, nextPlayer)
       setNameInput('')
-      setNotice(`Joined as ${data.name}.`)
+      setNotice(`Joined as ${data.name}. Waiting for other players.`)
       await refreshGame()
     } catch (err) {
       setNotice(err.message)
     } finally {
       setBusyAction('')
     }
-  }
-
-  const handleLeave = () => {
-    clearStoredPlayer(gameId)
-    setPlayer(null)
-    setRevealMessage('')
-    setViewResult(null)
   }
 
   const runAction = async (action, fn) => {
@@ -373,24 +436,18 @@ const Game = ({ gameId, navigate }) => {
 
   const startGame = () =>
     runAction('start', async () => {
+      if (!player?.token) {
+        throw new Error('Join the game to start it.')
+      }
       await request(`/api/games/${gameId}/start`, { method: 'POST' })
     })
 
   const assignRoles = () =>
     runAction('assign', async () => {
-      await request(`/api/games/${gameId}/assign`, { method: 'POST' })
-    })
-
-  const revealRole = () =>
-    runAction('reveal', async () => {
       if (!player?.token) {
-        throw new Error('Join the game to reveal your role.')
+        throw new Error('Join the game to assign roles.')
       }
-      const data = await request(`/api/games/${gameId}/reveal`, {
-        method: 'POST',
-        body: JSON.stringify({ token: player.token }),
-      })
-      setRevealMessage(data.message)
+      await request(`/api/games/${gameId}/assign`, { method: 'POST' })
     })
 
   const viewParty = () =>
@@ -407,11 +464,15 @@ const Game = ({ gameId, navigate }) => {
 
   const endGame = () =>
     runAction('end', async () => {
+      if (!player?.token) {
+        throw new Error('Join the game to end it.')
+      }
       await request(`/api/games/${gameId}/end`, { method: 'POST' })
       clearStoredPlayer(gameId)
       setPlayer(null)
       setRevealMessage('')
       setViewResult(null)
+      setLastRevealRound(0)
     })
 
   if (loading) {
@@ -488,102 +549,96 @@ const Game = ({ gameId, navigate }) => {
         </section>
       ) : (
         <section className="card">
-          <div className="row between">
-            <div>
-              <h2>You are in</h2>
-              <p className="lead">{player.name}</p>
-            </div>
-            <button className="btn ghost" type="button" onClick={handleLeave}>
-              Leave
-            </button>
-          </div>
+          <h2>You're in</h2>
+          <p className="lead">{player.name}</p>
+          {playerStatus ? <p className="muted">{playerStatus}</p> : null}
         </section>
       )}
 
-      <section className="card">
-        <h2>Actions</h2>
-        <div className="action-grid">
-          <button
-            className="btn large"
-            type="button"
-            onClick={startGame}
-            disabled={!canStart || busyAction === 'start'}
-          >
-            {busyAction === 'start' ? 'Starting…' : 'Start game'}
-          </button>
-          <button
-            className="btn large"
-            type="button"
-            onClick={assignRoles}
-            disabled={game.state !== 'active' || busyAction === 'assign'}
-          >
-            {busyAction === 'assign' ? 'Assigning…' : 'Assign roles'}
-          </button>
-          <button
-            className="btn large"
-            type="button"
-            onClick={revealRole}
-            disabled={!rolesReady || !player?.token || busyAction === 'reveal'}
-          >
-            {busyAction === 'reveal' ? 'Revealing…' : 'Reveal my role'}
-          </button>
-          <div className="action-stack">
+      {player ? (
+        <section className="card">
+          <h2>Actions</h2>
+          <div className="action-grid">
             <button
-              className="btn large secondary"
+              className="btn large"
               type="button"
-              onClick={viewParty}
-              disabled={!rolesReady || !player?.token || busyAction === 'view'}
+              onClick={startGame}
+              disabled={!canStart || busyAction === 'start'}
             >
-              {busyAction === 'view' ? 'Viewing…' : 'View party'}
+              {busyAction === 'start' ? 'Starting…' : 'Start game'}
             </button>
-            <select
-              value={viewTarget}
-              onChange={(event) => setViewTarget(event.target.value)}
-              disabled={!rolesReady || !game.players.length}
-              aria-label="Select player to view"
+            <button
+              className="btn large"
+              type="button"
+              onClick={assignRoles}
+              disabled={game.state !== 'active' || busyAction === 'assign'}
             >
-              {game.players.length ? (
-                game.players.map((playerName) => (
-                  <option key={playerName} value={playerName}>
-                    {playerName}
-                  </option>
-                ))
-              ) : (
-                <option value="">No players</option>
-              )}
-            </select>
+              {busyAction === 'assign' ? 'Assigning…' : 'Assign roles'}
+            </button>
+            <div className="action-stack">
+              <button
+                className="btn large secondary"
+                type="button"
+                onClick={viewParty}
+                disabled={!rolesReady || !player?.token || busyAction === 'view'}
+              >
+                {busyAction === 'view' ? 'Viewing…' : 'View party'}
+              </button>
+              <select
+                value={viewTarget}
+                onChange={(event) => setViewTarget(event.target.value)}
+                disabled={!rolesReady || !game.players.length}
+                aria-label="Select player to view"
+              >
+                {game.players.length ? (
+                  game.players.map((playerName) => (
+                    <option key={playerName} value={playerName}>
+                      {playerName}
+                    </option>
+                  ))
+                ) : (
+                  <option value="">No players</option>
+                )}
+              </select>
+            </div>
+            <button
+              className="btn large danger"
+              type="button"
+              onClick={endGame}
+              disabled={busyAction === 'end'}
+            >
+              {busyAction === 'end' ? 'Ending…' : 'End game'}
+            </button>
           </div>
-          <button
-            className="btn large danger"
-            type="button"
-            onClick={endGame}
-            disabled={busyAction === 'end'}
-          >
-            {busyAction === 'end' ? 'Ending…' : 'End game'}
-          </button>
-        </div>
-      </section>
+        </section>
+      ) : null}
 
-      <section className="grid">
-        <div className="card">
-          <h2>Your role</h2>
-          <p className="muted">Reveal shows only on your device.</p>
-          <div className="result">
-            <p>{revealMessage || 'Hidden until revealed.'}</p>
+      {player ? (
+        <section className="grid">
+          <div className="card">
+            <h2>Your role</h2>
+            <p className="muted">Shown only on your device after roles are assigned.</p>
+            <div className="result">
+              <p>
+                {rolesReady
+                  ? revealMessage || 'Fetching your role...'
+                  : 'Waiting for roles to be assigned.'}
+              </p>
+            </div>
           </div>
-        </div>
-        <div className="card">
-          <h2>Party membership</h2>
-          <p className="muted">Only the viewer sees the party card.</p>
-          <div className="result">
-            <p>
-              {viewResult
-                ? `${viewResult.name}'s party is ${viewResult.party}.`
-                : 'No membership viewed yet.'}
-            </p>
+          <div className="card">
+            <h2>Party membership</h2>
+            <p className="muted">Only the viewer sees the party card.</p>
+            <div className="result">
+              <p>
+                {viewResult
+                  ? `${viewResult.name}'s party is ${viewResult.party}.`
+                  : 'No membership viewed yet.'}
+              </p>
+            </div>
           </div>
-        </div>
-      </section>
+        </section>
+      ) : null}
 
       <section className="card">
         <h2>Players</h2>
