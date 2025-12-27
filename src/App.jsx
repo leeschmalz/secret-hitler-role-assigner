@@ -6,7 +6,21 @@ const GAME_ID_RE = /^[a-z]{5}$/
 const POLL_INTERVAL = 4000
 
 const request = async (path, options = {}) => {
-  const shouldLog = typeof window !== 'undefined' && import.meta?.env?.DEV
+  const shouldLog = (() => {
+    if (typeof window === 'undefined') {
+      return false
+    }
+    if (import.meta?.env?.DEV) {
+      return true
+    }
+    let storageDebug = false
+    try {
+      storageDebug = window.localStorage.getItem('shra:debug') === 'true'
+    } catch (error) {
+      storageDebug = false
+    }
+    return storageDebug || new URLSearchParams(window.location.search).has('debug')
+  })()
   if (shouldLog) {
     console.info('[api] request', {
       path,
@@ -30,7 +44,12 @@ const request = async (path, options = {}) => {
   }
 
   if (shouldLog) {
-    console.info('[api] response', { path, status: response.status, ok: response.ok })
+    console.info('[api] response', {
+      path,
+      status: response.status,
+      ok: response.ok,
+      payload,
+    })
   }
 
   if (!response.ok) {
