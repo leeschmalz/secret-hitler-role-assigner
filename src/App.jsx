@@ -51,6 +51,23 @@ const stateLabels = {
   active: 'Active',
 }
 
+const normalizeGame = (data) => {
+  if (!data || typeof data !== 'object') {
+    return null
+  }
+
+  const players = Array.isArray(data.players) ? data.players : []
+  const events = Array.isArray(data.events) ? data.events : []
+  const playerCount = Number.isFinite(data.playerCount) ? data.playerCount : players.length
+
+  return {
+    ...data,
+    players,
+    events,
+    playerCount,
+  }
+}
+
 const getStoredPlayer = (gameId) => {
   if (typeof window === 'undefined') {
     return null
@@ -178,15 +195,20 @@ const Game = ({ gameId, navigate }) => {
       if (initial) {
         setLoading(true)
       }
-      try {
-        const data = await request(`/api/games/${gameId}`)
-        if (active) {
-          setGame(data)
-          setError('')
+    try {
+      const data = await request(`/api/games/${gameId}`)
+      if (active) {
+        const nextGame = normalizeGame(data)
+        if (!nextGame) {
+          setError('Invalid game data.')
+          return
         }
-      } catch (err) {
-        if (active) {
-          setError(err.message)
+        setGame(nextGame)
+        setError('')
+      }
+    } catch (err) {
+      if (active) {
+        setError(err.message)
         }
       } finally {
         if (active && initial) {
@@ -205,7 +227,11 @@ const Game = ({ gameId, navigate }) => {
 
   const refreshGame = async () => {
     const data = await request(`/api/games/${gameId}`)
-    setGame(data)
+    const nextGame = normalizeGame(data)
+    if (!nextGame) {
+      throw new Error('Invalid game data.')
+    }
+    setGame(nextGame)
   }
 
   useEffect(() => {
