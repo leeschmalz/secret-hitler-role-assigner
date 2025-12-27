@@ -27,13 +27,20 @@ export default async function handler(req, res) {
     }
 
     const viewerRows = await sql`
-      select name
+      select name, name_key
       from players
       where game_id = ${gameId} and token = ${token}
     `
 
     if (!viewerRows.length) {
       return json(res, 403, { error: 'Player not found.' })
+    }
+
+    const viewer = viewerRows[0]
+
+    // Prevent self-investigation
+    if (viewer.name_key === targetKey) {
+      return json(res, 400, { error: 'You cannot investigate your own party membership.' })
     }
 
     const targetRows = await sql`

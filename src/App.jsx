@@ -324,16 +324,22 @@ const Game = ({ gameId, navigate }) => {
     setGame(nextGame)
   }
 
+  // Get other players (exclude self) for party investigation
+  const otherPlayers = useMemo(() => {
+    if (!game?.players?.length || !player?.name) return []
+    return game.players.filter((p) => p.toLowerCase() !== player.name.toLowerCase())
+  }, [game?.players, player?.name])
+
   useEffect(() => {
-    if (!game?.players?.length) {
+    if (!otherPlayers.length) {
       setViewTarget('')
       return
     }
 
-    if (!game.players.includes(viewTarget)) {
-      setViewTarget(game.players[0])
+    if (!otherPlayers.includes(viewTarget)) {
+      setViewTarget(otherPlayers[0])
     }
-  }, [game, viewTarget])
+  }, [otherPlayers, viewTarget])
 
   useEffect(() => {
     // Don't check immediately after joining (race condition with game refresh)
@@ -807,24 +813,24 @@ const Game = ({ gameId, navigate }) => {
             <select
               value={viewTarget}
               onChange={(event) => setViewTarget(event.target.value)}
-              disabled={!game.players.length}
+              disabled={!otherPlayers.length}
               aria-label="Select player to view"
             >
-              {game.players.length ? (
-                game.players.map((playerName) => (
+              {otherPlayers.length ? (
+                otherPlayers.map((playerName) => (
                   <option key={playerName} value={playerName}>
                     {playerName}
                   </option>
                 ))
               ) : (
-                <option value="">No players</option>
+                <option value="">No other players</option>
               )}
             </select>
             <button
               className="btn secondary"
               type="button"
               onClick={viewParty}
-              disabled={!player?.token || busyAction === 'view'}
+              disabled={!player?.token || !otherPlayers.length || busyAction === 'view'}
             >
               {busyAction === 'view' ? 'Viewing…' : 'View Party'}
             </button>
