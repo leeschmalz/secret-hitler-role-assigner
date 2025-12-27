@@ -1,9 +1,40 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 
 const MIN_PLAYERS = 5
 const MAX_PLAYERS = 10
 const GAME_ID_RE = /^[a-z]{5}$/
 const POLL_INTERVAL = 2500
+
+// Web Audio API ding sound generator
+const playDing = () => {
+  try {
+    const AudioContext = window.AudioContext || window.webkitAudioContext
+    if (!AudioContext) return
+
+    const ctx = new AudioContext()
+    const oscillator = ctx.createOscillator()
+    const gainNode = ctx.createGain()
+
+    oscillator.connect(gainNode)
+    gainNode.connect(ctx.destination)
+
+    oscillator.frequency.setValueAtTime(880, ctx.currentTime) // A5 note
+    oscillator.frequency.setValueAtTime(1100, ctx.currentTime + 0.1) // Higher pitch
+    oscillator.type = 'sine'
+
+    gainNode.gain.setValueAtTime(0.3, ctx.currentTime)
+    gainNode.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.5)
+
+    oscillator.start(ctx.currentTime)
+    oscillator.stop(ctx.currentTime + 0.5)
+
+    // Clean up after sound finishes
+    setTimeout(() => ctx.close(), 600)
+  } catch (error) {
+    // Audio not supported or blocked
+    console.warn('Could not play notification sound', error)
+  }
+}
 
 const request = async (path, options = {}) => {
   const shouldLog = (() => {
@@ -207,6 +238,8 @@ const Game = ({ gameId, navigate }) => {
   const [viewTarget, setViewTarget] = useState('')
   const [viewResult, setViewResult] = useState(null)
   const [justJoined, setJustJoined] = useState(false)
+  const seenEventIds = useRef(new Set())
+  const initialLoadDone = useRef(false)
 
   useEffect(() => {
     setPlayer(getStoredPlayer(gameId))
@@ -218,7 +251,32 @@ const Game = ({ gameId, navigate }) => {
     setError('')
     setLoading(true)
     setJustJoined(false)
+    seenEventIds.current = new Set()
+    initialLoadDone.current = false
   }, [gameId])
+
+  // Play ding sound when party membership is viewed
+  useEffect(() => {
+    if (!game?.events?.length) return
+
+    // Don't play sounds on initial load
+    if (!initialLoadDone.current) {
+      game.events.forEach((event) => seenEventIds.current.add(event.id))
+      initialLoadDone.current = true
+      return
+    }
+
+    // Check for new "party membership was viewed" events
+    for (const event of game.events) {
+      if (seenEventIds.current.has(event.id)) continue
+      seenEventIds.current.add(event.id)
+
+      if (event.message?.includes('party membership was viewed')) {
+        playDing()
+        break // Only play once per update
+      }
+    }
+  }, [game?.events])
 
   useEffect(() => {
     let active = true
