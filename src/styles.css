@@ -508,6 +508,19 @@ h3 {
   gap: 0.75rem;
 }
 
+.game-action-buttons {
+  display: flex;
+  gap: 0.75rem;
+}
+
+.game-action-buttons > button {
+  flex: 1;
+}
+
+.game-action-buttons > .assign-confirm {
+  flex: 1;
+}
+
 .players-compact {
   text-align: center;
 }
