@@ -18,15 +18,12 @@ export default async function handler(req, res) {
       return json(res, 404, { error: 'Game not found.' })
     }
 
+    // Delete all associated data and the game itself
     await sql`delete from players where game_id = ${gameId}`
     await sql`delete from events where game_id = ${gameId}`
-    await sql`
-      update games
-      set state = 'add_players', round = 0, updated_at = now()
-      where id = ${gameId}
-    `
+    await sql`delete from games where id = ${gameId}`
 
-    return json(res, 200, { state: 'add_players' })
+    return json(res, 200, { deleted: true })
   } catch (error) {
     console.error('End game failed', error)
     return json(res, 500, { error: 'Server error.' })

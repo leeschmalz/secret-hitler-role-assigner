@@ -10,6 +10,7 @@ Minimal React + Vite app with Vercel serverless functions and Neon Postgres.
 
 ## Local development
 
+Use dev mode to show the god controls menu, let's you add many players and see their roles without having multiple devices.
 ```
-vercel dev
+DEV_MODE=true vercel dev
 ```

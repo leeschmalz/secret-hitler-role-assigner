@@ -4,6 +4,34 @@ import { randomGameId } from '../_game.js'
 
 const getRequestId = (req) => req.headers['x-vercel-id'] || req.headers['x-request-id'] || ''
 
+// Delete games older than 1 week and their associated data
+const cleanupOldGames = async (requestId) => {
+  try {
+    // Find games older than 1 week
+    const oldGames = await sql`
+      select id from games
+      where created_at < now() - interval '7 days'
+    `
+
+    if (!oldGames.length) {
+      return
+    }
+
+    const oldGameIds = oldGames.map((g) => g.id)
+    console.info('[games] cleanup starting', { requestId, count: oldGameIds.length })
+
+    // Delete associated data first, then the games
+    await sql`delete from players where game_id = any(${oldGameIds})`
+    await sql`delete from events where game_id = any(${oldGameIds})`
+    await sql`delete from games where id = any(${oldGameIds})`
+
+    console.info('[games] cleanup complete', { requestId, deleted: oldGameIds.length })
+  } catch (error) {
+    // Log but don't throw - cleanup is best-effort
+    console.error('[games] cleanup failed', { requestId, message: error?.message })
+  }
+}
+
 const createGame = async (requestId) => {
   let attempt = 0
 
@@ -46,6 +74,10 @@ export default async function handler(req, res) {
       return json(res, 500, { error: 'Could not create game.' })
     }
     console.info('[games] create success', { requestId, gameId })
+
+    // Run cleanup in the background (non-blocking)
+    cleanupOldGames(requestId).catch(() => {})
+
     return json(res, 201, { id: gameId })
   } catch (error) {
     console.error('Create game failed', {

@@ -539,18 +539,19 @@ const Game = ({ gameId, navigate }) => {
       setViewResult(data)
     })
 
-  const endGame = () =>
-    runAction('end', async () => {
-      if (!player?.token) {
-        throw new Error('Join the game to end it.')
-      }
+  const endGame = async () => {
+    setBusyAction('end')
+    setNotice('')
+    setError('')
+    try {
       await request(`/api/games/${gameId}/end`, { method: 'POST' })
       clearStoredPlayer(gameId)
-      setPlayer(null)
-      setRevealMessage('')
-      setViewResult(null)
-      setLastRevealRound(0)
-    })
+      navigate('/')
+    } catch (err) {
+      setNotice(err.message)
+      setBusyAction('')
+    }
+  }
 
   if (loading) {
     return (
