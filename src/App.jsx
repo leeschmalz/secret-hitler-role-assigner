@@ -276,7 +276,6 @@ const Home = ({ navigate }) => {
               onChange={(event) => setGameId(event.target.value)}
               placeholder="e.g. kqznd"
               aria-label="Game id"
-              autoFocus
             />
             <button className="btn large" type="submit">
               Join
