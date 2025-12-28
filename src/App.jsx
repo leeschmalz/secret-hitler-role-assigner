@@ -932,7 +932,7 @@ const Game = ({ gameId, navigate }) => {
           </button>
         ) : (
           <div className="assign-confirm">
-            <p className="confirm-text">Ready to assign new roles?</p>
+            <p className="confirm-text">Ready to assign new roles? This will end the round.</p>
             <div className="confirm-buttons">
               <button
                 className="btn large full-width"
