@@ -648,7 +648,6 @@ const Game = ({ gameId, navigate }) => {
               placeholder="Your name"
               aria-label="Your name"
               disabled={!canAddPlayers || game.playerCount >= MAX_PLAYERS}
-              autoFocus
             />
             <button
               className="btn large"
