@@ -351,12 +351,10 @@ h3 {
   margin-top: 0.75rem;
 }
 
-.view-party-row .dropdown {
-  flex: 1;
-}
-
+.view-party-row .dropdown,
 .view-party-row .btn {
-  flex-shrink: 0;
+  flex: 1 1 0;
+  min-width: 0;
 }
 
 /* Custom Dropdown */
