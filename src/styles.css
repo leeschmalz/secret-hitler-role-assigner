@@ -345,15 +345,10 @@ h3 {
 }
 
 .view-party-row {
-  display: flex;
-  gap: 0.5rem;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
   margin-top: 0.75rem;
-}
-
-.view-party-row .dropdown,
-.view-party-row .btn {
-  flex: 1 1 0;
-  min-width: 0;
 }
 
 /* Custom Dropdown */
