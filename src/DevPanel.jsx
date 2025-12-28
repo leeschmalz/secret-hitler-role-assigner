@@ -1,4 +1,6 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
+
+const POLL_INTERVAL = 2500
 
 const DevPanel = ({ gameId, onPlayersAdded }) => {
   const [isOpen, setIsOpen] = useState(false)
@@ -8,6 +10,7 @@ const DevPanel = ({ gameId, onPlayersAdded }) => {
   const [message, setMessage] = useState('')
   const [playerCount, setPlayerCount] = useState(5)
   const [allRoles, setAllRoles] = useState(null)
+  const lastGameId = useRef(gameId)
 
   // Check if dev mode is enabled on the server
   useEffect(() => {
@@ -25,6 +28,38 @@ const DevPanel = ({ gameId, onPlayersAdded }) => {
     }
     checkDevMode()
   }, [])
+
+  // Clear roles when gameId changes
+  useEffect(() => {
+    if (gameId !== lastGameId.current) {
+      setAllRoles(null)
+      lastGameId.current = gameId
+    }
+  }, [gameId])
+
+  // Auto-poll roles when they're being displayed
+  useEffect(() => {
+    if (!allRoles || !gameId || !isOpen) return
+
+    const pollRoles = async () => {
+      try {
+        const res = await fetch('/api/dev/all-roles', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ gameId }),
+        })
+        const data = await res.json()
+        if (res.ok) {
+          setAllRoles(data)
+        }
+      } catch (err) {
+        // Silently fail on poll errors
+      }
+    }
+
+    const interval = setInterval(pollRoles, POLL_INTERVAL)
+    return () => clearInterval(interval)
+  }, [allRoles, gameId, isOpen])
 
   // Don't render anything if not in dev mode
   if (loading || !devMode) {
