@@ -406,6 +406,20 @@ h3 {
   gap: 0.75rem;
 }
 
+.players-compact {
+  text-align: center;
+}
+
+.players-line {
+  margin: 0 0 0.5rem 0;
+}
+
+.role-distribution {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+
 .footer-nav {
   margin-top: 2rem;
   text-align: center;

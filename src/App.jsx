@@ -814,6 +814,13 @@ const Game = ({ gameId, navigate }) => {
         </div>
       </section>
 
+      <section className="card players-compact">
+        <p className="players-line">
+          <strong>Players ({game.playerCount}):</strong> {game.players.join(', ')}
+        </p>
+        <p className="role-distribution">{getRoleDistribution(game.playerCount)}</p>
+      </section>
+
       <section className="card view-party-card">
         <h2>Investigate Party Membership</h2>
         <div className="view-party-row">
@@ -847,18 +854,6 @@ const Game = ({ gameId, navigate }) => {
             <strong>{viewResult.name}'s</strong> party is <strong>{viewResult.party}</strong>
           </div>
         ) : null}
-      </section>
-
-      <section className="card">
-        <h2>Players ({game.playerCount})</h2>
-        <ul className="player-list">
-          {game.players.map((playerName) => (
-            <li key={playerName} className={playerName === player.name ? 'you' : ''}>
-              {playerName}
-              {playerName === player.name ? <span className="you-badge">you</span> : null}
-            </li>
-          ))}
-        </ul>
       </section>
 
       <section className="card game-actions-card">
@@ -963,6 +958,18 @@ const getRoleClass = (message) => {
   if (lower.includes('hitler')) return 'hitler'
   if (lower.includes('fascist')) return 'fascist'
   return ''
+}
+
+const getRoleDistribution = (count) => {
+  const distributions = {
+    5: '3 Liberal, 1 Fascist, 1 Hitler. Hitler knows.',
+    6: '4 Liberal, 1 Fascist, 1 Hitler. Hitler knows.',
+    7: '4 Liberal, 2 Fascist, 1 Hitler. Hitler doesn\'t know.',
+    8: '5 Liberal, 2 Fascist, 1 Hitler. Hitler doesn\'t know.',
+    9: '5 Liberal, 3 Fascist, 1 Hitler. Hitler doesn\'t know.',
+    10: '6 Liberal, 3 Fascist, 1 Hitler. Hitler doesn\'t know.',
+  }
+  return distributions[count] || ''
 }
 
 export default function App() {
