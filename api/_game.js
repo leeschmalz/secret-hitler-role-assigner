@@ -89,8 +89,7 @@ export const buildRoleMessage = (playerName, players) => {
 
   const fascists = players.filter((entry) => entry.role && entry.role !== 'liberal')
   const others = fascists.filter((entry) => entry.name !== playerName)
-  const list = others.map((entry) => `(${entry.name} is ${entry.role})`).join(' ')
-  const suffix = list ? ` Fascists are: ${list}` : ' Fascists are: (none)'
+  const list = others.map((entry) => `${entry.name} is ${entry.role}.`).join(' ')
 
-  return `Your role is ${role}.${suffix}`
+  return `Your role is ${role}.${list ? ' ' + list : ''}`
 }

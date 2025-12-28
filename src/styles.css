@@ -400,6 +400,12 @@ h3 {
   padding: 1rem;
 }
 
+.game-actions-card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
 .footer-nav {
   margin-top: 2rem;
   text-align: center;
@@ -488,6 +494,10 @@ input::placeholder {
 
 .btn.danger:hover {
   box-shadow: 0 8px 24px rgba(201, 80, 60, 0.3);
+}
+
+.btn.full-width {
+  width: 100%;
 }
 
 .muted {

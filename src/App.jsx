@@ -255,6 +255,7 @@ const Game = ({ gameId, navigate }) => {
   const [viewResult, setViewResult] = useState(null)
   const [justJoined, setJustJoined] = useState(false)
   const [showAssignConfirm, setShowAssignConfirm] = useState(false)
+  const [showEndConfirm, setShowEndConfirm] = useState(false)
   const seenEventIds = useRef(new Set())
   const initialLoadDone = useRef(false)
 
@@ -269,6 +270,7 @@ const Game = ({ gameId, navigate }) => {
     setLoading(true)
     setJustJoined(false)
     setShowAssignConfirm(false)
+    setShowEndConfirm(false)
     seenEventIds.current = new Set()
     initialLoadDone.current = false
   }, [gameId])
@@ -812,79 +814,39 @@ const Game = ({ gameId, navigate }) => {
         </div>
       </section>
 
-      <section className="card actions-card">
-        <h2>Actions</h2>
-        <div className="action-buttons">
-          {!showAssignConfirm ? (
-            <button
-              className="btn large"
-              type="button"
-              onClick={() => setShowAssignConfirm(true)}
-            >
-              New Round
-            </button>
-          ) : (
-            <div className="assign-confirm">
-              <p className="confirm-text">Ready to assign new roles?</p>
-              <div className="confirm-buttons">
-                <button
-                  className="btn large"
-                  type="button"
-                  onClick={() => {
-                    assignRoles()
-                    setShowAssignConfirm(false)
-                  }}
-                  disabled={busyAction === 'assign'}
-                >
-                  {busyAction === 'assign' ? 'Assigning…' : 'Assign Roles'}
-                </button>
-                <button
-                  className="btn ghost"
-                  type="button"
-                  onClick={() => setShowAssignConfirm(false)}
-                  disabled={busyAction === 'assign'}
-                >
-                  Cancel
-                </button>
-              </div>
-            </div>
-          )}
+      <section className="card view-party-card">
+        <h2>Investigate Party Membership</h2>
+        <div className="view-party-row">
+          <select
+            value={viewTarget}
+            onChange={(event) => setViewTarget(event.target.value)}
+            disabled={!otherPlayers.length}
+            aria-label="Select player to view"
+          >
+            {otherPlayers.length ? (
+              otherPlayers.map((playerName) => (
+                <option key={playerName} value={playerName}>
+                  {playerName}
+                </option>
+              ))
+            ) : (
+              <option value="">No other players</option>
+            )}
+          </select>
+          <button
+            className="btn secondary"
+            type="button"
+            onClick={viewParty}
+            disabled={!player?.token || !otherPlayers.length || busyAction === 'view'}
+          >
+            {busyAction === 'view' ? 'Viewing…' : 'View Party'}
+          </button>
         </div>
-
-        <div className="view-party-section">
-          <h3>Presidential Power: Investigate party membership</h3>
-          <div className="view-party-row">
-            <select
-              value={viewTarget}
-              onChange={(event) => setViewTarget(event.target.value)}
-              disabled={!otherPlayers.length}
-              aria-label="Select player to view"
-            >
-              {otherPlayers.length ? (
-                otherPlayers.map((playerName) => (
-                  <option key={playerName} value={playerName}>
-                    {playerName}
-                  </option>
-                ))
-              ) : (
-                <option value="">No other players</option>
-              )}
-            </select>
-            <button
-              className="btn secondary"
-              type="button"
-              onClick={viewParty}
-              disabled={!player?.token || !otherPlayers.length || busyAction === 'view'}
-            >
-              {busyAction === 'view' ? 'Viewing…' : 'View Party'}
-            </button>
+        {viewResult ? (
+          <div className="view-result">
+            <strong>{viewResult.name}'s</strong> party is <strong>{viewResult.party}</strong>
           </div>
-          {viewResult ? (
-            <div className="view-result">
-              <strong>{viewResult.name}'s</strong> party is <strong>{viewResult.party}</strong>
-            </div>
-          ) : null}
-        </div>
+        ) : null}
       </section>
 
       <section className="card">
@@ -897,6 +859,77 @@ const Game = ({ gameId, navigate }) => {
             </li>
           ))}
         </ul>
+      </section>
+
+      <section className="card game-actions-card">
+        {!showAssignConfirm ? (
+          <button
+            className="btn large full-width"
+            type="button"
+            onClick={() => setShowAssignConfirm(true)}
+          >
+            New Round
+          </button>
+        ) : (
+          <div className="assign-confirm">
+            <p className="confirm-text">Ready to assign new roles?</p>
+            <div className="confirm-buttons">
+              <button
+                className="btn large full-width"
+                type="button"
+                onClick={() => {
+                  assignRoles()
+                  setShowAssignConfirm(false)
+                }}
+                disabled={busyAction === 'assign'}
+              >
+                {busyAction === 'assign' ? 'Assigning…' : 'Assign'}
+              </button>
+              <button
+                className="btn ghost full-width"
+                type="button"
+                onClick={() => setShowAssignConfirm(false)}
+                disabled={busyAction === 'assign'}
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        )}
+        {!showEndConfirm ? (
+          <button
+            className="btn large danger full-width"
+            type="button"
+            onClick={() => setShowEndConfirm(true)}
+          >
+            End Game
+          </button>
+        ) : (
+          <div className="assign-confirm">
+            <p className="confirm-text">Are you sure? This will delete the game.</p>
+            <div className="confirm-buttons">
+              <button
+                className="btn large danger full-width"
+                type="button"
+                onClick={() => {
+                  endGame()
+                  setShowEndConfirm(false)
+                }}
+                disabled={busyAction === 'end'}
+              >
+                {busyAction === 'end' ? 'Ending…' : 'End'}
+              </button>
+              <button
+                className="btn ghost full-width"
+                type="button"
+                onClick={() => setShowEndConfirm(false)}
+                disabled={busyAction === 'end'}
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        )}
       </section>
 
       <section className="card">
@@ -913,17 +946,6 @@ const Game = ({ gameId, navigate }) => {
       </section>
 
       {notice ? <p className="notice">{notice}</p> : null}
-
-      <section className="card danger-zone">
-        <button
-          className="btn danger"
-          type="button"
-          onClick={endGame}
-          disabled={busyAction === 'end'}
-        >
-          {busyAction === 'end' ? 'Ending…' : 'End Game'}
-        </button>
-      </section>
 
       <footer className="footer-nav">
         <button className="btn ghost" type="button" onClick={() => navigate('/')}>
