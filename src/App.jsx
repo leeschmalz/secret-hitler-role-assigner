@@ -526,6 +526,8 @@ const Game = ({ gameId, navigate }) => {
       if (!player?.token) {
         throw new Error('Join the game to assign roles.')
       }
+      setRevealMessage('')
+      setViewResult(null)
       await request(`/api/games/${gameId}/assign`, { method: 'POST' })
     })
 
@@ -815,9 +817,8 @@ const Game = ({ gameId, navigate }) => {
       </section>
 
       <section className="card players-compact">
-        <p className="players-line">
-          <strong>Players ({game.playerCount}):</strong> {game.players.join(', ')}
-        </p>
+        <h2>Players ({game.playerCount})</h2>
+        <p className="players-line">{game.players.join(', ')}</p>
         <p className="role-distribution">{getRoleDistribution(game.playerCount)}</p>
       </section>
 
