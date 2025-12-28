@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
+import DevPanel from './DevPanel'
 
 const MIN_PLAYERS = 5
 const MAX_PLAYERS = 10
@@ -927,9 +928,16 @@ export default function App() {
   const { path, navigate } = useRoute()
 
   const match = path.match(/^\/g\/([a-z]{5})$/)
-  if (match) {
-    return <Game gameId={match[1]} navigate={navigate} />
-  }
+  const gameId = match ? match[1] : null
 
-  return <Home navigate={navigate} />
+  return (
+    <>
+      {match ? (
+        <Game gameId={gameId} navigate={navigate} />
+      ) : (
+        <Home navigate={navigate} />
+      )}
+      <DevPanel gameId={gameId} />
+    </>
+  )
 }

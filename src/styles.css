@@ -482,3 +482,250 @@ input::placeholder {
     font-size: 2rem;
   }
 }
+
+/* Dev Panel Styles */
+.dev-toggle {
+  position: fixed;
+  bottom: 1rem;
+  right: 1rem;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  border: 2px solid #f06b4e;
+  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+  font-size: 1.25rem;
+  cursor: pointer;
+  z-index: 9999;
+  box-shadow: 0 4px 20px rgba(255, 107, 53, 0.4);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.dev-toggle:hover {
+  transform: scale(1.1);
+  box-shadow: 0 6px 28px rgba(255, 107, 53, 0.5);
+}
+
+.dev-panel {
+  position: fixed;
+  bottom: 5rem;
+  right: 1rem;
+  width: 320px;
+  max-height: 70vh;
+  overflow-y: auto;
+  background: linear-gradient(145deg, #1a1a2e 0%, #0f0f1a 100%);
+  border: 1px solid #f06b4e;
+  border-radius: 12px;
+  box-shadow: 0 12px 48px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(255, 107, 53, 0.2);
+  z-index: 9998;
+  font-size: 0.85rem;
+}
+
+.dev-panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid rgba(255, 107, 53, 0.3);
+  background: rgba(255, 107, 53, 0.1);
+}
+
+.dev-panel-header h3 {
+  margin: 0;
+  color: #f06b4e;
+  font-size: 0.9rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+}
+
+.dev-close {
+  background: transparent;
+  border: none;
+  color: #888;
+  font-size: 1.5rem;
+  cursor: pointer;
+  line-height: 1;
+  padding: 0;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.dev-close:hover {
+  color: #f06b4e;
+}
+
+.dev-panel-content {
+  padding: 1rem;
+}
+
+.dev-game-id {
+  margin: 0 0 1rem;
+  color: #aaa;
+}
+
+.dev-game-id code {
+  background: rgba(255, 107, 53, 0.15);
+  padding: 0.2rem 0.5rem;
+  border-radius: 4px;
+  color: #f06b4e;
+  font-family: 'DM Sans', monospace;
+  font-weight: 600;
+}
+
+.dev-warning {
+  margin: 0 0 1rem;
+  color: #f06b4e;
+  font-style: italic;
+}
+
+.dev-section {
+  margin-bottom: 1rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.dev-section:last-of-type {
+  margin-bottom: 0;
+  padding-bottom: 0;
+  border-bottom: none;
+}
+
+.dev-label {
+  display: block;
+  color: #ccc;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  margin-bottom: 0.5rem;
+}
+
+.dev-row {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.dev-input {
+  flex: 1;
+  padding: 0.5rem 0.75rem;
+  border-radius: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  background: rgba(0, 0, 0, 0.3);
+  color: #fff;
+  font: inherit;
+  font-size: 0.85rem;
+  max-width: 80px;
+}
+
+.dev-input:focus {
+  outline: none;
+  border-color: #f06b4e;
+}
+
+.dev-btn {
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  border: 1px solid #f06b4e;
+  background: rgba(255, 107, 53, 0.15);
+  color: #f06b4e;
+  font-weight: 600;
+  font-size: 0.8rem;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.dev-btn:hover:not(:disabled) {
+  background: rgba(255, 107, 53, 0.3);
+}
+
+.dev-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.dev-btn.full {
+  width: 100%;
+}
+
+.dev-message {
+  margin: 0.75rem 0 0;
+  padding: 0.5rem 0.75rem;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.05);
+  color: #aaa;
+  font-size: 0.8rem;
+  word-break: break-word;
+}
+
+.dev-roles {
+  margin-top: 0.75rem;
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 8px;
+  padding: 0.75rem;
+}
+
+.dev-roles-header {
+  margin: 0 0 0.5rem;
+  font-size: 0.75rem;
+  color: #888;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.dev-roles-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.dev-role-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.4rem 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.dev-role-item:last-child {
+  border-bottom: none;
+}
+
+.dev-role-name {
+  color: #ddd;
+}
+
+.dev-role-badge {
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 0.2rem 0.5rem;
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.1);
+  color: #888;
+}
+
+.dev-role-badge.liberal {
+  background: rgba(74, 144, 217, 0.2);
+  color: #7ab3e8;
+}
+
+.dev-role-badge.fascist {
+  background: rgba(201, 80, 60, 0.2);
+  color: #e0847a;
+}
+
+.dev-role-badge.hitler {
+  background: rgba(232, 165, 75, 0.15);
+  color: #e8a54b;
+  border: 1px solid rgba(201, 80, 60, 0.4);
+}
+
+@media (max-width: 400px) {
+  .dev-panel {
+    width: calc(100vw - 2rem);
+    left: 1rem;
+    right: 1rem;
+  }
+}
