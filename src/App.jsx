@@ -1,6 +1,55 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import DevPanel from './DevPanel'
 
+const Dropdown = ({ value, onChange, options, disabled, placeholder = 'Select...' }) => {
+  const [isOpen, setIsOpen] = useState(false)
+  const dropdownRef = useRef(null)
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setIsOpen(false)
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [])
+
+  const selectedLabel = options.find((opt) => opt.value === value)?.label || placeholder
+
+  return (
+    <div className={`dropdown ${disabled ? 'disabled' : ''}`} ref={dropdownRef}>
+      <button
+        type="button"
+        className="dropdown-trigger"
+        onClick={() => !disabled && setIsOpen(!isOpen)}
+        disabled={disabled}
+      >
+        <span className="dropdown-value">{selectedLabel}</span>
+        <span className="dropdown-arrow">{isOpen ? '▲' : '▼'}</span>
+      </button>
+      {isOpen && (
+        <ul className="dropdown-menu">
+          {options.map((opt) => (
+            <li key={opt.value}>
+              <button
+                type="button"
+                className={`dropdown-option ${opt.value === value ? 'selected' : ''}`}
+                onClick={() => {
+                  onChange(opt.value)
+                  setIsOpen(false)
+                }}
+              >
+                {opt.label}
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  )
+}
+
 const MIN_PLAYERS = 5
 const MAX_PLAYERS = 10
 const GAME_ID_RE = /^[a-z]{5}$/
@@ -781,15 +830,41 @@ const Game = ({ gameId, navigate }) => {
 
         {notice ? <p className="notice">{notice}</p> : null}
 
-        <section className="card danger-zone">
-          <button
-            className="btn danger"
-            type="button"
-            onClick={endGame}
-            disabled={busyAction === 'end'}
-          >
-            {busyAction === 'end' ? 'Ending…' : 'End Game'}
-          </button>
+        <section className="card game-actions-card">
+          {!showEndConfirm ? (
+            <button
+              className="btn large danger full-width"
+              type="button"
+              onClick={() => setShowEndConfirm(true)}
+            >
+              End Game
+            </button>
+          ) : (
+            <div className="assign-confirm">
+              <p className="confirm-text">Are you sure? This will delete the game.</p>
+              <div className="confirm-buttons">
+                <button
+                  className="btn large danger full-width"
+                  type="button"
+                  onClick={() => {
+                    endGame()
+                    setShowEndConfirm(false)
+                  }}
+                  disabled={busyAction === 'end'}
+                >
+                  {busyAction === 'end' ? 'Ending…' : 'End'}
+                </button>
+                <button
+                  className="btn ghost full-width"
+                  type="button"
+                  onClick={() => setShowEndConfirm(false)}
+                  disabled={busyAction === 'end'}
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          )}
         </section>
 
         <footer className="footer-nav">
@@ -825,22 +900,13 @@ const Game = ({ gameId, navigate }) => {
       <section className="card view-party-card">
         <h2>Investigate Party Membership</h2>
         <div className="view-party-row">
-          <select
+          <Dropdown
             value={viewTarget}
-            onChange={(event) => setViewTarget(event.target.value)}
+            onChange={setViewTarget}
+            options={otherPlayers.map((name) => ({ value: name, label: name }))}
             disabled={!otherPlayers.length}
-            aria-label="Select player to view"
-          >
-            {otherPlayers.length ? (
-              otherPlayers.map((playerName) => (
-                <option key={playerName} value={playerName}>
-                  {playerName}
-                </option>
-              ))
-            ) : (
-              <option value="">No other players</option>
-            )}
-          </select>
+            placeholder="Select player"
+          />
           <button
             className="btn secondary"
             type="button"
