@@ -878,8 +878,8 @@ const Game = ({ gameId, navigate }) => {
   return (
     <div className="app">
       <header className="hero centered">
-        <p className="eyebrow">Round {game.round}</p>
         <h1 className="game-code">{gameId}</h1>
+        <p className="round-label">Round {game.round}</p>
       </header>
 
       <section className="card role-card">
