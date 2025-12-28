@@ -4,21 +4,32 @@ import { randomGameId } from '../_game.js'
 
 const getRequestId = (req) => req.headers['x-vercel-id'] || req.headers['x-request-id'] || ''
 
-// Delete games older than 1 week and their associated data
+// Cleanup threshold in minutes (default: 7 days = 10080 minutes)
+const CLEANUP_MINUTES = Number(process.env.GAME_CLEANUP_MINUTES) || 10080
+
+// Delete games older than the configured threshold and their associated data
 const cleanupOldGames = async (requestId) => {
+  console.info('[games] cleanup check', { requestId, CLEANUP_MINUTES })
+
   try {
-    // Find games older than 1 week
+    // Find games older than the configured threshold
     const oldGames = await sql`
-      select id from games
-      where created_at < now() - interval '7 days'
+      select id, created_at from games
+      where created_at < now() - interval '1 minute' * ${CLEANUP_MINUTES}
     `
+
+    console.info('[games] cleanup query result', {
+      requestId,
+      found: oldGames.length,
+      games: oldGames.map((g) => ({ id: g.id, created_at: g.created_at })),
+    })
 
     if (!oldGames.length) {
       return
     }
 
     const oldGameIds = oldGames.map((g) => g.id)
-    console.info('[games] cleanup starting', { requestId, count: oldGameIds.length })
+    console.info('[games] cleanup starting', { requestId, count: oldGameIds.length, ids: oldGameIds })
 
     // Delete associated data first, then the games
     await sql`delete from players where game_id = any(${oldGameIds})`
@@ -28,7 +39,7 @@ const cleanupOldGames = async (requestId) => {
     console.info('[games] cleanup complete', { requestId, deleted: oldGameIds.length })
   } catch (error) {
     // Log but don't throw - cleanup is best-effort
-    console.error('[games] cleanup failed', { requestId, message: error?.message })
+    console.error('[games] cleanup failed', { requestId, message: error?.message, stack: error?.stack })
   }
 }
 
@@ -75,8 +86,8 @@ export default async function handler(req, res) {
     }
     console.info('[games] create success', { requestId, gameId })
 
-    // Run cleanup in the background (non-blocking)
-    cleanupOldGames(requestId).catch(() => {})
+    // Run cleanup (awaited for debugging - can be made non-blocking later)
+    await cleanupOldGames(requestId)
 
     return json(res, 201, { id: gameId })
   } catch (error) {
