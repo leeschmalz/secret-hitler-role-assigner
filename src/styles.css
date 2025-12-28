@@ -319,6 +319,7 @@ h3 {
 
 .assign-confirm {
   text-align: center;
+  overflow-anchor: none;
 }
 
 .confirm-text {
@@ -450,6 +451,7 @@ h3 {
   background: rgba(91, 166, 125, 0.12);
   color: var(--accent-2);
   text-align: center;
+  overflow-anchor: none;
 }
 
 .player-list {
@@ -493,6 +495,11 @@ h3 {
   gap: 0.25rem;
   font-size: 0.85rem;
   color: var(--muted);
+  overflow-anchor: none;
+}
+
+.activity-list li {
+  overflow-anchor: none;
 }
 
 .danger-zone {
@@ -506,6 +513,7 @@ h3 {
   display: flex;
   flex-direction: column;
   gap: 0.75rem;
+  overflow-anchor: none;
 }
 
 .players-compact {
@@ -631,6 +639,7 @@ input::placeholder {
   border: 1px solid rgba(201, 80, 60, 0.2);
   color: #e0847a;
   font-size: 0.85rem;
+  overflow-anchor: none;
 }
 
 @keyframes rise {
@@ -655,10 +664,6 @@ input::placeholder {
   .btn,
   .btn.large {
     width: 100%;
-  }
-
-  .view-party-row {
-    flex-direction: column;
   }
 
   h1.game-code {
