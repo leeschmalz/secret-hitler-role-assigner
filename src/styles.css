@@ -491,7 +491,7 @@ input::placeholder {
   width: 48px;
   height: 48px;
   border-radius: 50%;
-  border: 2px solid #f06b4e;
+  border: 2px solid #e8a54b;
   background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
   font-size: 1.25rem;
   cursor: pointer;
@@ -513,7 +513,7 @@ input::placeholder {
   max-height: 70vh;
   overflow-y: auto;
   background: linear-gradient(145deg, #1a1a2e 0%, #0f0f1a 100%);
-  border: 1px solid #f06b4e;
+  border: 1px solid #e8a54b;
   border-radius: 12px;
   box-shadow: 0 12px 48px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(255, 107, 53, 0.2);
   z-index: 9998;
@@ -531,7 +531,7 @@ input::placeholder {
 
 .dev-panel-header h3 {
   margin: 0;
-  color: #f06b4e;
+  color: #e8a54b;
   font-size: 0.9rem;
   font-weight: 600;
   letter-spacing: 0.05em;
@@ -553,7 +553,7 @@ input::placeholder {
 }
 
 .dev-close:hover {
-  color: #f06b4e;
+  color: #e8a54b;
 }
 
 .dev-panel-content {
@@ -569,14 +569,14 @@ input::placeholder {
   background: rgba(255, 107, 53, 0.15);
   padding: 0.2rem 0.5rem;
   border-radius: 4px;
-  color: #f06b4e;
+  color: #e8a54b;
   font-family: 'DM Sans', monospace;
   font-weight: 600;
 }
 
 .dev-warning {
   margin: 0 0 1rem;
-  color: #f06b4e;
+  color: #e8a54b;
   font-style: italic;
 }
 
@@ -620,15 +620,15 @@ input::placeholder {
 
 .dev-input:focus {
   outline: none;
-  border-color: #f06b4e;
+  border-color: #e8a54b;
 }
 
 .dev-btn {
   padding: 0.5rem 1rem;
   border-radius: 6px;
-  border: 1px solid #f06b4e;
+  border: 1px solid #e8a54b;
   background: rgba(255, 107, 53, 0.15);
-  color: #f06b4e;
+  color: #e8a54b;
   font-weight: 600;
   font-size: 0.8rem;
   cursor: pointer;

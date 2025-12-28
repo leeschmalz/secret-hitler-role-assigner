@@ -832,8 +832,7 @@ const Game = ({ gameId, navigate }) => {
         </div>
 
         <div className="view-party-section">
-          <h3>Investigate Party Membership</h3>
-          <p className="muted">Presidential power: view a player's party card.</p>
+          <h3>Presidential Power: Investigate party membership</h3>
           <div className="view-party-row">
             <select
               value={viewTarget}
