@@ -156,6 +156,7 @@ const clearStoredPlayer = (gameId) => {
 }
 
 const Home = ({ navigate }) => {
+  const [mode, setMode] = useState('create')
   const [gameId, setGameId] = useState('')
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
@@ -185,37 +186,55 @@ const Home = ({ navigate }) => {
 
   return (
     <div className="app">
-      <header className="hero">
+      <header className="hero centered">
         <p className="eyebrow">Secret Hitler</p>
         <h1>Role Assigner</h1>
       </header>
 
-      <section className="grid">
-        <div className="card">
+      <div className="mode-toggle">
+        <button
+          className={`mode-btn ${mode === 'create' ? 'active' : ''}`}
+          type="button"
+          onClick={() => { setMode('create'); setError('') }}
+        >
+          Create
+        </button>
+        <button
+          className={`mode-btn ${mode === 'join' ? 'active' : ''}`}
+          type="button"
+          onClick={() => { setMode('join'); setError('') }}
+        >
+          Join
+        </button>
+      </div>
+
+      {mode === 'create' ? (
+        <section className="card home-card">
           <h2>Create game</h2>
-          <p className="muted">Start a new session and share the id.</p>
+          <p className="muted">Start a new session and share the code with friends.</p>
           <button className="btn large" type="button" onClick={handleCreate} disabled={busy}>
             {busy ? 'Creating…' : 'Create game'}
           </button>
-        </div>
-
-        <div className="card">
+        </section>
+      ) : (
+        <section className="card home-card">
           <h2>Join game</h2>
-          <p className="muted">Enter a 5-letter id to jump in.</p>
-          <form className="row" onSubmit={handleJoin}>
+          <p className="muted">Enter a 5-letter game code to jump in.</p>
+          <form className="join-form" onSubmit={handleJoin}>
             <input
               type="text"
               value={gameId}
               onChange={(event) => setGameId(event.target.value)}
               placeholder="e.g. kqznd"
               aria-label="Game id"
+              autoFocus
             />
             <button className="btn large" type="submit">
               Join
             </button>
           </form>
-        </div>
-      </section>
+        </section>
+      )}
 
       {error ? <p className="notice">{error}</p> : null}
     </div>
