@@ -922,76 +922,74 @@ const Game = ({ gameId, navigate }) => {
       </section>
 
       <section className="card game-actions-card">
-        <div className="game-action-buttons">
-          {!showAssignConfirm ? (
-            <button
-              className="btn large"
-              type="button"
-              onClick={() => setShowAssignConfirm(true)}
-            >
-              New Round
-            </button>
-          ) : (
-            <div className="assign-confirm">
-              <p className="confirm-text">Ready to assign new roles?</p>
-              <div className="confirm-buttons">
-                <button
-                  className="btn large"
-                  type="button"
-                  onClick={() => {
-                    assignRoles()
-                    setShowAssignConfirm(false)
-                  }}
-                  disabled={busyAction === 'assign'}
-                >
-                  {busyAction === 'assign' ? 'Assigning…' : 'Assign'}
-                </button>
-                <button
-                  className="btn ghost"
-                  type="button"
-                  onClick={() => setShowAssignConfirm(false)}
-                  disabled={busyAction === 'assign'}
-                >
-                  Cancel
-                </button>
-              </div>
+        {!showAssignConfirm ? (
+          <button
+            className="btn large full-width"
+            type="button"
+            onClick={() => setShowAssignConfirm(true)}
+          >
+            New Round
+          </button>
+        ) : (
+          <div className="assign-confirm">
+            <p className="confirm-text">Ready to assign new roles?</p>
+            <div className="confirm-buttons">
+              <button
+                className="btn large full-width"
+                type="button"
+                onClick={() => {
+                  assignRoles()
+                  setShowAssignConfirm(false)
+                }}
+                disabled={busyAction === 'assign'}
+              >
+                {busyAction === 'assign' ? 'Assigning…' : 'Assign'}
+              </button>
+              <button
+                className="btn ghost full-width"
+                type="button"
+                onClick={() => setShowAssignConfirm(false)}
+                disabled={busyAction === 'assign'}
+              >
+                Cancel
+              </button>
             </div>
-          )}
-          {!showEndConfirm ? (
-            <button
-              className="btn large danger"
-              type="button"
-              onClick={() => setShowEndConfirm(true)}
-            >
-              End Game
-            </button>
-          ) : (
-            <div className="assign-confirm">
-              <p className="confirm-text">Are you sure? This will delete the game.</p>
-              <div className="confirm-buttons">
-                <button
-                  className="btn large danger"
-                  type="button"
-                  onClick={() => {
-                    endGame()
-                    setShowEndConfirm(false)
-                  }}
-                  disabled={busyAction === 'end'}
-                >
-                  {busyAction === 'end' ? 'Ending…' : 'End'}
-                </button>
-                <button
-                  className="btn ghost"
-                  type="button"
-                  onClick={() => setShowEndConfirm(false)}
-                  disabled={busyAction === 'end'}
-                >
-                  Cancel
-                </button>
-              </div>
+          </div>
+        )}
+        {!showEndConfirm ? (
+          <button
+            className="btn large danger full-width"
+            type="button"
+            onClick={() => setShowEndConfirm(true)}
+          >
+            End Game
+          </button>
+        ) : (
+          <div className="assign-confirm">
+            <p className="confirm-text">Are you sure? This will delete the game.</p>
+            <div className="confirm-buttons">
+              <button
+                className="btn large danger full-width"
+                type="button"
+                onClick={() => {
+                  endGame()
+                  setShowEndConfirm(false)
+                }}
+                disabled={busyAction === 'end'}
+              >
+                {busyAction === 'end' ? 'Ending…' : 'End'}
+              </button>
+              <button
+                className="btn ghost full-width"
+                type="button"
+                onClick={() => setShowEndConfirm(false)}
+                disabled={busyAction === 'end'}
+              >
+                Cancel
+              </button>
             </div>
-          )}
-        </div>
+          </div>
+        )}
       </section>
 
       <section className="card">
