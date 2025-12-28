@@ -236,7 +236,7 @@ const Home = ({ navigate }) => {
   return (
     <div className="app">
       <header className="hero centered">
-        <p className="eyebrow">Secret Roles</p>
+        <p className="eyebrow">Secret Hitler</p>
       </header>
 
       <div className="mode-toggle">
